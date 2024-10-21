@@ -9,14 +9,14 @@ const app = express();
 
 app.use(express.json());
 
-// Ruta para recibir parámetros en formato JSON para el método SAW
+// Ruta para recibir parámetros en formato JSON
 app.post('/saw', (req, res) => {
-    console.log('Solicitud recibida:', req.body); // Mensaje de depuración
+    console.log('Solicitud recibida:', req.body); 
 
     const { numCriterios, numAlternativas, tipoCriterio, pesoCriterio, matrizValores } = req.body;
 
     // Crear archivo de entrada para el programa SAW
-    const inputFile = path.join(__dirname, 'input_saw.txt'); // Usar __dirname para rutas seguras
+    const inputFile = path.join(__dirname, 'input_saw.txt'); 
     let input = `${numCriterios} ${numAlternativas}\n`;
 
     // Agregar tipo y peso de cada criterio
@@ -31,12 +31,11 @@ app.post('/saw', (req, res) => {
 
     // Guardar en archivo de texto
     fs.writeFileSync(inputFile, input);
-    console.log('Archivo de entrada para SAW creado:', input); // Mensaje de depuración
+    console.log('Archivo de entrada para SAW creado:', input);
 
-    // Detectar si estamos en Windows o en Unix (Linux/macOS)
     const isWindows = os.platform() === 'win32';
     const exeFile = isWindows ? 'saw.exe' : './saw';
-    const command = `${exeFile} "${inputFile}"`;  // Ruta con espacios entre comillas
+    const command = `${exeFile} "${inputFile}"`;
 
 // Comprobar si el archivo existe antes de ejecutar
 if (fs.existsSync(inputFile)) {
@@ -55,38 +54,43 @@ exec(command, (error, stdout, stderr) => {
         return res.status(500).send(`Error de ejecución: ${stderr}`);
     }
 
-    // La salida ahora contiene el mensaje completo
+    
     console.log('Respuesta:', stdout);
-    // Enviar la salida directamente como respuesta
-    res.send(stdout.trim()); // .trim() para eliminar espacios en blanco adicionales
+    
+    res.send(stdout.trim()); 
 });
 
 });
 
-// Ruta para recibir archivo CSV con la matriz de datos para SAW
-app.post('/saw/upload', upload.single('file'), (req, res) => {
+// Ruta para recibir archivo CSV
+app.post('/saw/upload', upload.single('File'), (req, res) => {
     if (!req.file) {
         return res.status(400).send('No se ha recibido ningún archivo.');
     }
 
-    const filePath = path.join(__dirname, req.file.path);  // Ruta del archivo subido
+    const filePath = path.join(dirname, req.file.path); 
 
-    // Detectar si estamos en Windows o Unix
-    const isWindows = os.platform() === 'win32';
-    const exeFile = isWindows ? 'saw.exe' : './saw';
-    const command = `${exeFile} ${filePath}`;
+console.log("Archivo que se está enviando:", filePath); 
 
-    // Ejecutar el programa SAW
-    exec(command, (error, stdout, stderr) => {
-        if (error) {
-            return res.status(500).send(`Error al ejecutar SAW: ${error.message}`);
-        }
-        if (stderr) {
-            return res.status(500).send(`Error de ejecución: ${stderr}`);
-        }
-        // Devolver la salida del programa SAW
-        res.send(stdout);
-    });
+const isWindows = os.platform() === 'win32';
+const exeFile = isWindows ? 'sawProgram.exe' : './sawProgram';
+const command = `${exeFile} ${filePath}`;  
+
+console.log('Ruta de archivo generada:', path.join(dirname, 'uploads', 'input_saw.txt'));
+console.log('Contenido del archivo:', fs.readFileSync(filePath, 'utf8'));
+
+// Ejecutar el programa SAW
+exec(command, (error, stdout, stderr) => {
+    if (error) {
+        return res.status(500).send(`Error al ejecutar SAW: ${error.message}`);
+    }
+    if (stderr) {
+        return res.status(500).send(`Error de ejecución: ${stderr}`);
+    }
+    // Devolver la salida del programa SAW
+    res.send(stdout);
+});
+
 });
 
 const port = 4000;
